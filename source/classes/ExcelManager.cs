@@ -89,7 +89,7 @@ namespace SpecificationBuilder
 
             progressViewer.StopProgress();
 
-            logger.AppendToLog("Файл " + System.IO.Path.GetFileName(filename) + " загружен за " + progressViewer.Finish() + " секунд.");
+            logger.AppendToLog("Файл " + Path.GetFileName(filename) + " загружен за " + progressViewer.Finish() + " секунд.");
             mainForm.RemoveProgress(progressViewer);
 
             book.Close(0);

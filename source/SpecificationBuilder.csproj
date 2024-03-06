@@ -50,11 +50,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Classes\Classificator.cs" />
-    <Compile Include="Classes\ExcelManager.cs" />
-    <Compile Include="Classes\Logger.cs" />
-    <Compile Include="Classes\ProgressViewer.cs" />
-    <Compile Include="Classes\SpecificationVariant.cs" />
+    <Compile Include="classes\Classificator.cs" />
+    <Compile Include="classes\ExcelManager.cs" />
+    <Compile Include="classes\Logger.cs" />
+    <Compile Include="classes\ProgressViewer.cs" />
+    <Compile Include="classes\SpecificationVariant.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>

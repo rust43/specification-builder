@@ -28,7 +28,7 @@ namespace SpecificationBuilder
             this.logger = logger;
         }
 
-        public void LoadFile(System.Windows.Forms.Panel progressPanel)
+        public void Load_ClassificatorFile(System.Windows.Forms.Panel progressPanel)
         {
             try
             {
@@ -40,7 +40,7 @@ namespace SpecificationBuilder
             }
             try
             {
-                ParseInputTable();
+                Parse_InputTable();
             }
             catch (Exception e)
             {
@@ -48,7 +48,7 @@ namespace SpecificationBuilder
             }
             try
             {
-                FillVariants();
+                Fill_Variants();
             }
             catch (Exception e)
             {
@@ -56,7 +56,39 @@ namespace SpecificationBuilder
             }
         }
 
-        private void ParseInputTable()
+        public void Save_SpecificationFile(object[] data)
+        {
+            List<SpecificationDetail> output_list = new List<SpecificationDetail>();
+
+            for (int i = 0; i < data.Length; i++)
+            {
+                var dict = (Dictionary<string, double>)data[i];
+
+                foreach (KeyValuePair<string, double> pair in dict)
+                {
+                    output_list.AddRange(Get_VariantDetailsList(pair.Key, pair.Value));
+                }
+            }
+        }
+
+        private List<SpecificationDetail> Get_VariantDetailsList(string var_name, double count)
+        {
+            var variant = GetSpecificationVariant(var_name);
+            if (variant == null) return null;
+
+            var list = new List<SpecificationDetail>();
+
+            foreach (var detail in variant.GetDetails())
+            {
+                var new_detail_line = detail;
+                new_detail_line.Multiply(count);
+                list.Add(new_detail_line);
+            }
+
+            return list;
+        }
+
+        private void Parse_InputTable()
         {
             if (inputTable == null) return;
 
@@ -88,7 +120,7 @@ namespace SpecificationBuilder
             inputTable = null;
         }
 
-        private void FillVariants()
+        private void Fill_Variants()
         {
             if (parsed_list == null) return;
             if (variants_list != null) variants_list.Clear();
@@ -116,8 +148,7 @@ namespace SpecificationBuilder
                     continue;
 
                 // Определяю количество деталей
-                int count;
-                if (!int.TryParse(detail_record[7], out count))
+                if (!double.TryParse(detail_record[7], out double count))
                     count = 0;
 
                 // Ищу есть ли уже такой вариант
@@ -140,8 +171,9 @@ namespace SpecificationBuilder
             parsed_list = null;
         }
 
+
         /// <summary>
-        /// Функция возвращает вариант, если таковой имеется в списке. Если нет, то создает новый и возвращает его
+        /// Функция возвращает вариант, если таковой имеется в списке. Если нет, то создает новый и возвращает его.
         /// </summary>
         /// <param name="var_type">Тип варианта</param>
         /// <param name="number">Номер варианта</param>
@@ -160,6 +192,21 @@ namespace SpecificationBuilder
             SpecificationVariant new_variant = new SpecificationVariant(number, var_type);
             variants_list.Add(new_variant);
             return new_variant;
+        }
+
+
+        /// <summary>
+        /// Функция возвращает вариант, если таковой имеется в списке. Если нет, то возвращает null.
+        /// </summary>
+        /// <param name="name">Наименование варианта</param>
+        /// <returns>Найденный объект класса SpecificationVariant или null</returns>
+        private SpecificationVariant GetSpecificationVariant(string name)
+        {
+            foreach (SpecificationVariant variant in variants_list)
+            {
+                if (variant.GetName == name) return variant;
+            }
+            return null;
         }
 
         public IEnumerable<SpecificationVariant> GetSpecificationVariants()

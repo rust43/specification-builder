@@ -243,7 +243,7 @@ namespace SpecificationBuilder
         private void LoadClassificatorFile(string filename)
         {
             classificatorFile = new ClassificatorFile(excel, logger, filename);
-            classificatorFile.LoadFile(pnlProgress);
+            classificatorFile.Load_ClassificatorFile(pnlProgress);
             FillLoadedData();
         }
 
@@ -284,10 +284,10 @@ namespace SpecificationBuilder
 
         private object[] CollectFormData()
         {
-            var selected_fastenings = new Dictionary<string, int>();
-            var selected_supports = new Dictionary<string, int>();
-            var selected_couplings = new Dictionary<string, int>();
-            var selected_crosses = new Dictionary<string, int>();
+            var selected_fastenings = new Dictionary<string, double>();
+            var selected_supports = new Dictionary<string, double>();
+            var selected_couplings = new Dictionary<string, double>();
+            var selected_crosses = new Dictionary<string, double>();
 
             if (grpFastening.Controls.Count > 1)
             {
@@ -300,7 +300,7 @@ namespace SpecificationBuilder
                     if (cmbVariant.SelectedItem == null) continue;
 
                     string variant = cmbVariant.SelectedItem.ToString();
-                    int.TryParse(txtCount.Text, out int count);
+                    double.TryParse(txtCount.Text, out double count);
 
                     selected_fastenings[variant] = count;
                 }
@@ -317,7 +317,7 @@ namespace SpecificationBuilder
                     if (cmbVariant.SelectedItem == null) continue;
 
                     string variant = cmbVariant.SelectedItem.ToString();
-                    int.TryParse(txtCount.Text, out int count);
+                    double.TryParse(txtCount.Text, out double count);
 
                     selected_supports[variant] = count;
                 }
@@ -334,7 +334,7 @@ namespace SpecificationBuilder
                     if (cmbVariant.SelectedItem == null) continue;
 
                     string variant = cmbVariant.SelectedItem.ToString();
-                    int.TryParse(txtCount.Text, out int count);
+                    double.TryParse(txtCount.Text, out double count);
 
                     selected_couplings[variant] = count;
                 }
@@ -351,7 +351,7 @@ namespace SpecificationBuilder
                     if (cmbVariant.SelectedItem == null) continue;
 
                     string variant = cmbVariant.SelectedItem.ToString();
-                    int.TryParse(txtCount.Text, out int count);
+                    double.TryParse(txtCount.Text, out double count);
 
                     selected_crosses[variant] = count;
                 }
@@ -375,17 +375,32 @@ namespace SpecificationBuilder
 
         private void btnBuildSpecification_Click(object sender, EventArgs e)
         {
+            if (classificatorFile == null)
+            {
+                logger.AppendToLog("Отсутствует классификатор. Экспорт не возможен.", LogLevel.Error);
+                return;
+            }
+
+            string output_template_filename = AppDomain.CurrentDomain.BaseDirectory + "out.xlsx";
+
+            if (!File.Exists(output_template_filename))
+            {
+                logger.AppendToLog("Отсутствует файл шаблона \"out.xlsx\". Экспорт не возможен.", LogLevel.Error);
+                return;
+            }
+
             SaveFileDialog saveFileDialog = new SaveFileDialog();
             saveFileDialog.Filter = "Таблица Excel|*.xlsx|Все файлы|*.*";
             saveFileDialog.Title = "Выберите путь сохранения спецификации";
             saveFileDialog.DefaultExt = ".xlsx";
             saveFileDialog.RestoreDirectory = true;
-            saveFileDialog.FileName = "спецификация";
+            saveFileDialog.FileName = "Спецификация";
 
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
             {
+                File.Copy(output_template_filename, saveFileDialog.FileName, true);
                 var data = CollectFormData();
-                //SaveSpecificationFile(data);
+                classificatorFile.Save_SpecificationFile(data);
             }
         }
 

@@ -24,7 +24,6 @@ namespace SpecificationBuilder
             _number = number;
             _variant = variant;
             _name = $"Вариант {number}";
-
             _details = new List<SpecificationDetail>();
             //if (variant == Variant.Fastening)
             //    _type = "Натяжное крепление";
@@ -45,8 +44,7 @@ namespace SpecificationBuilder
 
         public IEnumerable<SpecificationDetail> GetDetails()
         {
-            SpecificationDetail[] allDetails = _details.ToArray();
-            return allDetails;
+            return _details.ToArray();
         }
 
         public string GetName { get { return _name; } }
@@ -60,15 +58,20 @@ namespace SpecificationBuilder
         private string _description;
         private string _vendor;
         private string _measure;
-        private int _count;
+        private double _count;
 
-        public SpecificationDetail(string name, string description, string vendor, string measure, int count)
+        public SpecificationDetail(string name, string description, string vendor, string measure, double count)
         {
             _name = name;
             _description = description;
             _vendor = vendor;
             _measure = measure;
             _count = count;
+        }
+
+        public void Multiply(double mult)
+        {
+            _count *= mult;
         }
     }
 }
