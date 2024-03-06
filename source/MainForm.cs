@@ -264,16 +264,16 @@ namespace SpecificationBuilder
                 var type = variant.GetVariant;
 
                 if (type == VariantType.Fastening)
-                    fasteningNames.Add(variant.GetName);
+                    fasteningNames.Add(variant.name);
 
                 if (type == VariantType.SupportingFastening)
-                    supportNames.Add(variant.GetName);
+                    supportNames.Add(variant.name);
 
                 if (type == VariantType.Coupling)
-                    couplingNames.Add(variant.GetName);
+                    couplingNames.Add(variant.name);
 
                 if (type == VariantType.Cross)
-                    crossNames.Add(variant.GetName);
+                    crossNames.Add(variant.name);
             }
 
             Create_Fastening_Panel();
@@ -368,11 +368,6 @@ namespace SpecificationBuilder
             return data;
         }
 
-        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            excel.Quit();
-        }
-
         private void btnBuildSpecification_Click(object sender, EventArgs e)
         {
             if (classificatorFile == null)
@@ -399,14 +394,19 @@ namespace SpecificationBuilder
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
             {
                 File.Copy(output_template_filename, saveFileDialog.FileName, true);
-                var data = CollectFormData();
-                classificatorFile.Save_SpecificationFile(data);
+                var form_data = CollectFormData();
+                classificatorFile.Save_SpecificationFile(form_data, saveFileDialog.FileName, pnlProgress);
             }
         }
 
         private void btnCollectDrawingSet_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            excel.Quit();
         }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Data;
 using System.Collections.Generic;
+using System.Windows.Forms;
+using System.Linq;
 
 namespace SpecificationBuilder
 {
@@ -28,7 +30,7 @@ namespace SpecificationBuilder
             this.logger = logger;
         }
 
-        public void Load_ClassificatorFile(System.Windows.Forms.Panel progressPanel)
+        public void Load_ClassificatorFile(Panel progressPanel)
         {
             try
             {
@@ -56,22 +58,87 @@ namespace SpecificationBuilder
             }
         }
 
-        public void Save_SpecificationFile(object[] data)
+        public void Save_SpecificationFile(object[] data, string output_filename, Panel progressPanel)
         {
-            List<SpecificationDetail> output_list = new List<SpecificationDetail>();
+            // Создаю словарь, для однократного учёта деталей в общем списке
+            var output_dict = new Dictionary<string, SpecificationDetail>();
+
+            // Перебираю все данные, полученные с формы
 
             for (int i = 0; i < data.Length; i++)
             {
+                // Преобразую один из массивов полученных данных в словарь
+                // (всего 4: selected_fastenings, selected_supports, selected_couplings, selected_crosses)
                 var dict = (Dictionary<string, double>)data[i];
 
+                // Перебираю записи типа <название варианта, количество> для каждого массива в отдельности
                 foreach (KeyValuePair<string, double> pair in dict)
                 {
-                    output_list.AddRange(Get_VariantDetailsList(pair.Key, pair.Value));
+                    // Вызываю функцию для получения всех деталей указанных в варианте
+                    var detail_list = Get_VariantDetailsList(pair.Key, pair.Value);
+
+                    // Перебираю детали в полученном списке
+                    foreach (var detail in detail_list)
+                    {
+                        // Определяю, есть ли уже такая деталь в общем словаре
+                        if (output_dict.TryGetValue(detail.name, out var existing_detail))
+                        {
+                            // Деталь есть, суммирую её значение с полученным
+                            existing_detail.Add(detail.count);
+                        }
+                        else
+                        {
+                            // Детали нет, создаю запись в словаре
+                            output_dict[detail.name] = detail;
+                        }
+                    }
                 }
             }
+            var output_table = FormOutputTable(output_dict.Values.ToList(), 8);
+            excel.SaveFile(6, 1, 1, output_table, progressPanel, output_filename);
         }
 
-        private List<SpecificationDetail> Get_VariantDetailsList(string var_name, double count)
+
+        private DataTable FormOutputTable(List<SpecificationDetail> output_list, int columns_count)
+        {
+            int i;
+            DataRow dr;
+            DataTable outputTable = new DataTable();
+            i = 0;
+            while (i < columns_count)
+            {
+                outputTable.Columns.Add();
+                i++;
+            }
+            i = 1;
+            foreach (var detail in output_list)
+            {
+                dr = outputTable.NewRow();
+                dr[0] = i.ToString();
+                dr[1] = detail.description;
+                dr[2] = detail.name;
+
+                dr[4] = detail.vendor;
+                dr[5] = detail.measure;
+                dr[6] = detail.count.ToString();
+
+                outputTable.Rows.Add(dr);
+
+                i += 1;
+            }
+            return outputTable;
+        }
+
+
+        /// <summary>
+        /// Функция для получения списка деталей
+        /// для указанного варианта и умножения количества его деталей на число
+        /// </summary>
+        /// <param name="var_name">Название варианта</param>
+        /// <param name="mult">Множитель количества</param>
+        /// <returns>Список деталей, с количеством, помноженным на множитель</returns>
+        /// 
+        private List<SpecificationDetail> Get_VariantDetailsList(string var_name, double mult)
         {
             var variant = GetSpecificationVariant(var_name);
             if (variant == null) return null;
@@ -80,9 +147,9 @@ namespace SpecificationBuilder
 
             foreach (var detail in variant.GetDetails())
             {
-                var new_detail_line = detail;
-                new_detail_line.Multiply(count);
-                list.Add(new_detail_line);
+                var new_detail = new SpecificationDetail(detail);
+                new_detail.Multiply(mult);
+                list.Add(new_detail);
             }
 
             return list;
@@ -184,7 +251,7 @@ namespace SpecificationBuilder
             foreach (SpecificationVariant variant in variants_list)
             {
                 if (variant.GetVariant == var_type)
-                    if (variant.GetName == name)
+                    if (variant.name == name)
                         // Есть такой вариант, возвращаем его
                         return variant;
             }
@@ -204,7 +271,7 @@ namespace SpecificationBuilder
         {
             foreach (SpecificationVariant variant in variants_list)
             {
-                if (variant.GetName == name) return variant;
+                if (variant.name == name) return variant;
             }
             return null;
         }

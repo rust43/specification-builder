@@ -4,6 +4,7 @@ using System.Data;
 using System.Reflection;
 using System.Windows.Forms;
 using Excel = Microsoft.Office.Interop.Excel;
+using System.Data.Common;
 
 namespace SpecificationBuilder
 {
@@ -98,6 +99,68 @@ namespace SpecificationBuilder
             releaseObject(range);
             releaseObject(sheet);
             return importTable;
+        }
+
+        /// <summary>
+        /// Функция для сохранения таблицы в файл
+        /// </summary>
+        /// <param name="startRow">номер начальной строки</param>
+        /// <param name="startCol">номер начальной колонки</param>
+        /// <param name="page">номер страницы</param>
+        /// <param name="outputTable">таблица для сохранения</param>
+        /// <param name="progressPanel">шкала процесса для отображения</param>
+        /// <param name="filename">имя файла для сохранения</param>
+        public void SaveFile(int startRow, int startCol, int page, DataTable outputTable, Panel progressPanel, string fileName)
+        {
+            Excel.Workbook book = excelApp.Workbooks.Open(
+                fileName, true, false, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value,
+                Missing.Value, true, false, Missing.Value, false, false, false);
+
+            Excel.Worksheet sheet = book.Sheets[page];
+            Excel.Range start = (Excel.Range)sheet.Cells[startRow, startCol];
+            Excel.Range end = (Excel.Range)sheet.Cells[startRow + outputTable.Rows.Count - 1, startCol + outputTable.Columns.Count - 1];
+            Excel.Range range = sheet.get_Range(start, end);
+
+            ProgressViewer progressViewer = new ProgressViewer(range.Rows.Count, progressPanel);
+            mainForm.AddProgress(progressViewer);
+            progressViewer.StartProgress();
+
+            object[,] arr = new object[outputTable.Rows.Count, outputTable.Columns.Count];
+            int i;
+            int j;
+
+            i = 0;
+            while (i < outputTable.Rows.Count)
+            {
+                j = 0;
+                while (j < outputTable.Columns.Count)
+                {
+                    arr[i, j] = outputTable.Rows[i][j];
+                    j++;
+                }
+                progressViewer.MakeProgress();
+                i++;
+            }
+            range.Value = arr;
+
+            Excel.Borders border = range.Borders;
+            border.LineStyle = Excel.XlLineStyle.xlContinuous;
+            border.Weight = 2d;
+
+            book.SaveAs(fileName, Excel.XlFileFormat.xlWorkbookDefault, Missing.Value, Missing.Value, false, false,
+                Excel.XlSaveAsAccessMode.xlNoChange, Excel.XlSaveConflictResolution.xlUserResolution,
+                false, Missing.Value, Missing.Value, Missing.Value);
+
+            book.Close(0);
+
+            progressViewer.StopProgress();
+
+            logger.AppendToLog("Файл " + Path.GetFileName(fileName) + " сохранен за " + progressViewer.Finish() + " секунд.");
+            mainForm.RemoveProgress(progressViewer);
+
+            releaseObject(arr);
+            releaseObject(range);
+            releaseObject(sheet);
         }
 
         public void WriteRow(int row, int startColumn, Excel.Worksheet sheet, string[] arr)

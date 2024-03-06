@@ -47,19 +47,21 @@ namespace SpecificationBuilder
             return _details.ToArray();
         }
 
-        public string GetName { get { return _name; } }
+        public string name { get { return _name; } }
 
         public VariantType GetVariant { get { return _variant; } }
     }
 
     public class SpecificationDetail
     {
+        // Внутренние переменные класса
         private string _name;
         private string _description;
         private string _vendor;
         private string _measure;
         private double _count;
 
+        // Конструктор класса
         public SpecificationDetail(string name, string description, string vendor, string measure, double count)
         {
             _name = name;
@@ -69,9 +71,32 @@ namespace SpecificationBuilder
             _count = count;
         }
 
+        public SpecificationDetail(SpecificationDetail other)
+        {
+            _name = other._name;
+            _description = other._description;
+            _vendor = other._vendor;
+            _measure = other._measure;
+            _count = other._count;
+        }
+
+        // Функция для умножения количества с множителем
         public void Multiply(double mult)
         {
             _count *= mult;
         }
+
+        // Функция для сложения количества с числом
+        public void Add(double count)
+        {
+            _count += count;
+        }
+
+        // Функции для получения значений внутренних переменных
+        public string name { get { return _name; } }
+        public string description { get { return _description; } }
+        public string vendor { get { return _vendor; } }
+        public string measure { get { return _measure; } }
+        public double count { get { return _count; } }
     }
 }
