@@ -4,7 +4,8 @@ using System.Data;
 using System.Reflection;
 using System.Windows.Forms;
 using Excel = Microsoft.Office.Interop.Excel;
-using System.Data.Common;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace SpecificationBuilder
 {
@@ -17,27 +18,19 @@ namespace SpecificationBuilder
         public ExcelManager(MainForm form, Panel progressPanel, Logger logger)
         {
             mainForm = form;
-            excelApp = new Excel.Application()
-            {
-                Visible = false,
-                DisplayAlerts = false,
-                ScreenUpdating = false,
-            };
-
-            if (excelApp == null)
-            {
-                logger.AppendToLog("Excel не установлен. Дальнейшая работа невозможна.", LogLevel.Error);
-                return;
-            }
-
             this.logger = logger;
         }
 
         public DataTable LoadFile(string filename, int page, Panel progressPanel, int c1, int r1, int c2 = -1, int r2 = -1)
         {
+            if (!RunExcel()) return null;
+
             DataTable importTable = new DataTable();
 
-            Excel.Workbook book = excelApp.Workbooks.Open(filename, true, true, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, false, false, Missing.Value, false, false, false);
+            var books = excelApp.Workbooks;
+            var book = books.Open(filename, true, true, Missing.Value, Missing.Value, Missing.Value,
+                Missing.Value, Missing.Value, Missing.Value, false, false, Missing.Value, false, false, false);
+
             Excel.Worksheet sheet;
 
             if (page > 0)
@@ -93,11 +86,18 @@ namespace SpecificationBuilder
             logger.AppendToLog("Файл " + Path.GetFileName(filename) + " загружен за " + progressViewer.Finish() + " секунд.");
             mainForm.RemoveProgress(progressViewer);
 
-            book.Close(0);
-
             releaseObject(arr);
             releaseObject(range);
             releaseObject(sheet);
+
+            book.Close(false);
+            releaseObject(book);
+
+            books.Close();
+            releaseObject(books);
+
+            QuitExcel();
+
             return importTable;
         }
 
@@ -112,6 +112,8 @@ namespace SpecificationBuilder
         /// <param name="filename">имя файла для сохранения</param>
         public void SaveFile(int startRow, int startCol, int page, DataTable outputTable, Panel progressPanel, string fileName)
         {
+            if (!RunExcel()) return;
+
             Excel.Workbook book = excelApp.Workbooks.Open(
                 fileName, true, false, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value,
                 Missing.Value, true, false, Missing.Value, false, false, false);
@@ -161,6 +163,8 @@ namespace SpecificationBuilder
             releaseObject(arr);
             releaseObject(range);
             releaseObject(sheet);
+
+            QuitExcel();
         }
 
         public void WriteRow(int row, int startColumn, Excel.Worksheet sheet, string[] arr)
@@ -202,10 +206,36 @@ namespace SpecificationBuilder
             return pagesCount;
         }
 
-        public void Quit()
+        public bool RunExcel()
+        {
+            excelApp = new Excel.Application()
+            {
+                Visible = false,
+                DisplayAlerts = false,
+                ScreenUpdating = false,
+            };
+
+            if (excelApp == null)
+            {
+                logger.AppendToLog("Excel не установлен. Дальнейшая работа невозможна.", LogLevel.Error);
+                return false;
+            }
+
+            return true;
+        }
+
+        public void QuitExcel()
         {
             if (excelApp != null)
+            {
                 excelApp.Quit();
+
+                var process = GetExcelProcess(excelApp);
+
+                process.Kill();
+
+                process.Dispose();
+            }
 
             releaseObject(excelApp);
         }
@@ -225,6 +255,16 @@ namespace SpecificationBuilder
             {
                 GC.Collect();
             }
+        }
+
+        [DllImport("user32.dll")]
+        static extern int GetWindowThreadProcessId(int hWnd, out int lpdwProcessId);
+
+        Process GetExcelProcess(Excel.Application excelApp)
+        {
+            int id;
+            GetWindowThreadProcessId(excelApp.Hwnd, out id);
+            return Process.GetProcessById(id);
         }
     }
 }

@@ -63,19 +63,27 @@ namespace SpecificationBuilder
             // Создаю словарь, для однократного учёта деталей в общем списке
             var output_dict = new Dictionary<string, SpecificationDetail>();
 
-            // Перебираю все данные, полученные с формы
+            VariantType[] types = new VariantType[4];
 
+            types[0] = VariantType.Fastening;
+            types[1] = VariantType.SupportingFastening;
+            types[2] = VariantType.Coupling;
+            types[3] = VariantType.Cross;
+
+            // Перебираю все данные, полученные с формы
             for (int i = 0; i < data.Length; i++)
             {
                 // Преобразую один из массивов полученных данных в словарь
                 // (всего 4: selected_fastenings, selected_supports, selected_couplings, selected_crosses)
                 var dict = (Dictionary<string, double>)data[i];
 
+                var type = types[i];
+
                 // Перебираю записи типа <название варианта, количество> для каждого массива в отдельности
                 foreach (KeyValuePair<string, double> pair in dict)
                 {
                     // Вызываю функцию для получения всех деталей указанных в варианте
-                    var detail_list = Get_VariantDetailsList(pair.Key, pair.Value);
+                    var detail_list = Get_VariantDetailsList(pair.Key, pair.Value, type);
 
                     // Перебираю детали в полученном списке
                     foreach (var detail in detail_list)
@@ -138,9 +146,9 @@ namespace SpecificationBuilder
         /// <param name="mult">Множитель количества</param>
         /// <returns>Список деталей, с количеством, помноженным на множитель</returns>
         /// 
-        private List<SpecificationDetail> Get_VariantDetailsList(string var_name, double mult)
+        private List<SpecificationDetail> Get_VariantDetailsList(string var_name, double mult, VariantType type)
         {
-            var variant = GetSpecificationVariant(var_name);
+            var variant = GetSpecificationVariant(var_name, type);
             if (variant == null) return null;
 
             var list = new List<SpecificationDetail>();
@@ -250,7 +258,7 @@ namespace SpecificationBuilder
             string name = $"Вариант {number}";
             foreach (SpecificationVariant variant in variants_list)
             {
-                if (variant.GetVariant == var_type)
+                if (variant.variant == var_type)
                     if (variant.name == name)
                         // Есть такой вариант, возвращаем его
                         return variant;
@@ -267,11 +275,11 @@ namespace SpecificationBuilder
         /// </summary>
         /// <param name="name">Наименование варианта</param>
         /// <returns>Найденный объект класса SpecificationVariant или null</returns>
-        private SpecificationVariant GetSpecificationVariant(string name)
+        private SpecificationVariant GetSpecificationVariant(string name, VariantType type)
         {
             foreach (SpecificationVariant variant in variants_list)
             {
-                if (variant.name == name) return variant;
+                if (variant.name == name && variant.variant == type) return variant;
             }
             return null;
         }

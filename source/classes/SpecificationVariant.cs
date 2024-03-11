@@ -49,7 +49,7 @@ namespace SpecificationBuilder
 
         public string name { get { return _name; } }
 
-        public VariantType GetVariant { get { return _variant; } }
+        public VariantType variant { get { return _variant; } }
     }
 
     public class SpecificationDetail

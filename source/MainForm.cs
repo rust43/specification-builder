@@ -261,7 +261,7 @@ namespace SpecificationBuilder
 
             foreach (var variant in classificatorFile.GetSpecificationVariants())
             {
-                var type = variant.GetVariant;
+                var type = variant.variant;
 
                 if (type == VariantType.Fastening)
                     fasteningNames.Add(variant.name);
@@ -393,20 +393,25 @@ namespace SpecificationBuilder
 
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
             {
-                File.Copy(output_template_filename, saveFileDialog.FileName, true);
-                var form_data = CollectFormData();
-                classificatorFile.Save_SpecificationFile(form_data, saveFileDialog.FileName, pnlProgress);
+                try
+                {
+                    File.Copy(output_template_filename, saveFileDialog.FileName, true);
+                }
+                catch (Exception ex)
+                {
+                    logger.AppendToLog($"Не удалось скопировать файл \"out.xlsx\". Экспорт не возможен. ({ex.Message})", LogLevel.Error);
+                }
+                finally
+                {
+                    var form_data = CollectFormData();
+                    classificatorFile.Save_SpecificationFile(form_data, saveFileDialog.FileName, pnlProgress);
+                }
             }
         }
 
         private void btnCollectDrawingSet_Click(object sender, EventArgs e)
         {
 
-        }
-
-        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            excel.Quit();
         }
     }
 }
