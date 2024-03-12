@@ -3,6 +3,7 @@ using System.Data;
 using System.Collections.Generic;
 using System.Windows.Forms;
 using System.Linq;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.ListView;
 
 namespace SpecificationBuilder
 {
@@ -112,31 +113,102 @@ namespace SpecificationBuilder
             int i;
             DataRow dr;
             DataTable outputTable = new DataTable();
+
             i = 0;
             while (i < columns_count)
             {
                 outputTable.Columns.Add();
                 i++;
             }
+
+            string[] categories = new string[] {
+                "1. Кабельная продукция",
+                "2. Кроссовое оборудование",
+                "3. Кабельная арматура",
+                "4. Прочие материалы"
+            };
+
+            // Категория кабельное оборудование
             i = 1;
+            dr = outputTable.NewRow();
+            dr[1] = categories[0];
+            outputTable.Rows.Add(dr);
+
+            // Категория кроссовое оборудование
+            dr = outputTable.NewRow();
+            dr[1] = categories[1];
+            outputTable.Rows.Add(dr);
+
+
+            // Поиск и запись муфты
+            var result = output_list.Find(x => x.description.ToLower().Contains("муфта"));
+            if (result != null)
+            {
+                outputTable.Rows.Add(Get_DetailRow(outputTable, result, i));
+                output_list.Remove(result);
+                i++;
+            }
+
+            // Поиск и запись кросса
+            result = output_list.Find(x => x.description.ToLower().Contains("кросс"));
+            if (result != null)
+            {
+                outputTable.Rows.Add(Get_DetailRow(outputTable, result, i));
+                output_list.Remove(result);
+                i++;
+            }
+
+            // Категория кабельная арматура
+            i = 1;
+            dr = outputTable.NewRow();
+            dr[1] = categories[2];
+            outputTable.Rows.Add(dr);
+
+            // Поиск и запись натяжного узла
+            result = output_list.Find(x => (x.description.ToLower().Contains("узел") && x.description.ToLower().Contains("натяжной")));
+            if (result != null)
+            {
+                outputTable.Rows.Add(Get_DetailRow(outputTable, result, i));
+                output_list.Remove(result);
+                i++;
+            }
+
+            // Поиск и запись поддерживающего узла
+            result = output_list.Find(x => (x.description.ToLower().Contains("узел") && x.description.ToLower().Contains("поддерживающий")));
+            if (result != null)
+            {
+                outputTable.Rows.Add(Get_DetailRow(outputTable, result, i));
+                output_list.Remove(result);
+                i++;
+            }
+
+            // Запись остальных деталей
             foreach (var detail in output_list)
             {
-                dr = outputTable.NewRow();
-                dr[0] = i.ToString();
-                dr[1] = detail.description;
-                dr[2] = detail.name;
-
-                dr[4] = detail.vendor;
-                dr[5] = detail.measure;
-                dr[6] = detail.count.ToString();
-
-                outputTable.Rows.Add(dr);
-
-                i += 1;
+                outputTable.Rows.Add(Get_DetailRow(outputTable, detail, i));
+                i++;
             }
+
+            // Категория прочие материалы
+            dr = outputTable.NewRow();
+            dr[1] = categories[3];
+            outputTable.Rows.Add(dr);
+
             return outputTable;
         }
 
+        private DataRow Get_DetailRow(DataTable table, SpecificationDetail detail, int index)
+        {
+            var dr = table.NewRow();
+            dr[0] = index.ToString();
+            dr[1] = detail.description;
+            dr[2] = detail.name;
+
+            dr[4] = detail.vendor;
+            dr[5] = detail.measure;
+            dr[6] = detail.count.ToString();
+            return dr;
+        }
 
         /// <summary>
         /// Функция для получения списка деталей
@@ -144,6 +216,7 @@ namespace SpecificationBuilder
         /// </summary>
         /// <param name="var_name">Название варианта</param>
         /// <param name="mult">Множитель количества</param>
+        /// <param name="type">Тип устройства для формирования списка деталей</param>
         /// <returns>Список деталей, с количеством, помноженным на множитель</returns>
         /// 
         private List<SpecificationDetail> Get_VariantDetailsList(string var_name, double mult, VariantType type)
@@ -218,8 +291,7 @@ namespace SpecificationBuilder
                     var_type = VariantType.Undefined;
 
                 // Определяю указанный номер варианта
-                int var_number;
-                if (!int.TryParse(detail_name.Substring(2), out var_number))
+                if (!int.TryParse(detail_name.Substring(2), out int var_number))
                     continue;
 
                 // Определяю количество деталей
@@ -274,6 +346,7 @@ namespace SpecificationBuilder
         /// Функция возвращает вариант, если таковой имеется в списке. Если нет, то возвращает null.
         /// </summary>
         /// <param name="name">Наименование варианта</param>
+        /// <param name="type">Тип варианта</param>
         /// <returns>Найденный объект класса SpecificationVariant или null</returns>
         private SpecificationVariant GetSpecificationVariant(string name, VariantType type)
         {
