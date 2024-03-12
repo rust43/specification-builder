@@ -104,7 +104,7 @@ namespace SpecificationBuilder
                 }
             }
             var output_table = FormOutputTable(output_dict.Values.ToList(), 8);
-            excel.SaveFile(6, 1, 1, output_table, progressPanel, output_filename);
+            excel.SaveFile(2, 1, 1, output_table, progressPanel, output_filename);
         }
 
 

@@ -1,11 +1,13 @@
 ﻿using System;
 using System.IO;
 using System.Data;
+using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
-using Excel = Microsoft.Office.Interop.Excel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+
+using Excel = Microsoft.Office.Interop.Excel;
 
 namespace SpecificationBuilder
 {
@@ -149,6 +151,20 @@ namespace SpecificationBuilder
             border.LineStyle = Excel.XlLineStyle.xlContinuous;
             border.Weight = 2d;
 
+            // Центрирование названий категорий
+            // Находим индексы строк
+            int[] idx = new int[4];
+            idx[0] = FindRow(sheet, new string[] { "1.", }, $"B1:B{outputTable.Rows.Count + 2}");
+            idx[1] = FindRow(sheet, new string[] { "2.", }, $"B1:B{outputTable.Rows.Count + 2}");
+            idx[2] = FindRow(sheet, new string[] { "3.", }, $"B1:B{outputTable.Rows.Count + 2}");
+            idx[3] = FindRow(sheet, new string[] { "4.", }, $"B1:B{outputTable.Rows.Count + 2}");
+
+            // Центрируем
+            sheet.get_Range($"B{idx[0]}:B{idx[0]}").Cells.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+            sheet.get_Range($"B{idx[1]}:B{idx[1]}").Cells.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+            sheet.get_Range($"B{idx[2]}:B{idx[2]}").Cells.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+            sheet.get_Range($"B{idx[3]}:B{idx[3]}").Cells.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+
             book.SaveAs(fileName, Excel.XlFileFormat.xlWorkbookDefault, Missing.Value, Missing.Value, false, false,
                 Excel.XlSaveAsAccessMode.xlNoChange, Excel.XlSaveConflictResolution.xlUserResolution,
                 false, Missing.Value, Missing.Value, Missing.Value);
@@ -185,6 +201,25 @@ namespace SpecificationBuilder
             var writeRange = sheet.Range[startCell, endCell];
 
             writeRange.Value = data;
+        }
+
+        public int FindRow(Excel.Worksheet sheet, string[] words, string col_range = "A0:A10")
+        {
+            // Определяем номер строки
+            int index = -1;
+            object[,] arr = sheet.get_Range(col_range).Value;
+            for (int i = 1; i < arr.Length; i++)
+            {
+                if (arr[i, 1] != null)
+                {
+                    if (words.Any(arr[i, 1].ToString().Contains))
+                    {
+                        index = i;
+                        break;
+                    }
+                }
+            }
+            return index;
         }
 
         public int GetPagesCount(string filename)

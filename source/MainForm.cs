@@ -411,7 +411,7 @@ namespace SpecificationBuilder
 
         private void btnCollectDrawingSet_Click(object sender, EventArgs e)
         {
-
+            MessageBox.Show("Данную функцию заблокировал пользователь:\n\r Востриков Тимур Александрович!", "Ошибка!", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
     }
 }
